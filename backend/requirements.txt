@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+torch
+torchvision
+diffusers
+transformers
+accelerate
+safetensors
+huggingface-hub
+imageio
+imageio-ffmpeg
