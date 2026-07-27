@@ -11,3 +11,4 @@ safetensors
 huggingface-hub
 imageio
 imageio-ffmpeg
+gdown

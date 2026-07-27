@@ -143,7 +143,7 @@ class DownloadProgress:
 
 
 def _download_model_sync() -> None:
-    from huggingface_hub import snapshot_download
+    import gdown
 
     ensure_directories()
     with _download_lock:
@@ -156,16 +156,15 @@ def _download_model_sync() -> None:
         _update_state(
             status="downloading", installed=False, progress=0.0,
             downloaded_bytes=0, total_bytes=0, current_file="",
-            detail="Đang kết nối để tải mô hình video…",
+            detail="Đang kết nối để tải mô hình video từ Google Drive…",
         )
         try:
             MODEL_DIR.mkdir(parents=True, exist_ok=True)
-            snapshot_download(
-                repo_id=MODEL_ID,
-                local_dir=MODEL_DIR,
-                force_download=False,
-                max_workers=4,
-                tqdm_class=DownloadProgress,
+            output_path = MODEL_DIR / "ltxv-2b-0.9.8-distilled-fp8.safetensors"
+            gdown.download(
+                id="1eyon1qAQJ-kbqH17bz4uIn50dWyhZ-FB",
+                output=str(output_path),
+                quiet=False
             )
             _marker_path.write_text(
                 json.dumps({"model_id": MODEL_ID}, ensure_ascii=False),
@@ -227,9 +226,18 @@ def _load_model():
     try:
         single_file_path = MODEL_DIR / "ltxv-2b-0.9.8-distilled-fp8.safetensors"
         if single_file_path.exists():
+            from transformers import T5EncoderModel
+            _update_state(status="loading", detail=f"Đang tải Text Encoder...", device=device)
+            text_encoder = T5EncoderModel.from_pretrained(
+                "Lightricks/LTX-Video",
+                subfolder="text_encoder",
+                torch_dtype=dtype,
+            )
+            _update_state(status="loading", detail=f"Đang nạp Pipeline...", device=device)
             model = LTXPipeline.from_single_file(
                 str(single_file_path),
                 torch_dtype=dtype,
+                text_encoder=text_encoder,
             )
         else:
             model = LTXPipeline.from_pretrained(
