@@ -226,9 +226,19 @@ def _load_model():
     try:
         single_file_path = MODEL_DIR / "ltxv-2b-0.9.8-distilled-fp8.safetensors"
         if single_file_path.exists():
+            from transformers import T5EncoderModel
+            _update_state(status="loading", detail=f"Đang tải Text Encoder từ Cache...", device=device)
+            text_encoder = T5EncoderModel.from_pretrained(
+                "Lightricks/LTX-Video",
+                subfolder="text_encoder",
+                torch_dtype=dtype,
+                local_files_only=True, # Bắt buộc dùng file đã tải ở Colab
+            )
+            _update_state(status="loading", detail=f"Đang nạp Pipeline...", device=device)
             model = LTXPipeline.from_single_file(
                 str(single_file_path),
                 torch_dtype=dtype,
+                text_encoder=text_encoder,
             )
         else:
             model = LTXPipeline.from_pretrained(
